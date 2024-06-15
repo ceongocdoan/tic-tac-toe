@@ -2,16 +2,21 @@
   "name": "tic_tac_toe",
   "version": "1.0.0",
   "description": "A Tic-tac-toe game using Electron",
-  "main": "src/main.js",
+  "main": "dist/main.js",
   "scripts": {
     "start": "electron .",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "build": "webpack --mode development"
   },
   "dependencies": {
-    "electron": "^31.0.1"
+    "electron": "^31.0.1",
+    "mysql2": "^3.10.1",
+    "mysql2-promise": "^0.1.4",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.20"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.61",
@@ -19,6 +24,9 @@
     "@electron-forge/maker-rpm": "^6.0.0-beta.61",
     "@electron-forge/maker-squirrel": "^6.0.0-beta.61",
     "@electron-forge/maker-zip": "^6.0.0-beta.61",
-    "eslint": "^8.13.0"
+    "eslint": "^8.13.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.4.5",
+    "webpack-cli": "^5.1.4"
   }
 }

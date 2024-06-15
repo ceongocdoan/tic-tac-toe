@@ -2,8 +2,8 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import { Database } from './db';
 import * as path from 'path'; 
 let mainWindow: BrowserWindow;
-import { MenuItemConstructorOptions } from 'electron'; // Đảm bảo bạn import đúng kiểu dữ liệu MenuItemConstructorOptions
 
+import { MenuItemConstructorOptions } from 'electron'; // Đảm bảo bạn import đúng kiểu dữ liệu MenuItemConstructorOptions
 // Cập nhật kiểu dữ liệu của đối số phù hợp
 const template: MenuItemConstructorOptions[] = [
     {
@@ -30,12 +30,12 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js')
     }
   });
-
-  mainWindow.loadFile('src/index.html');
+  mainWindow.webContents.openDevTools();
+  mainWindow.loadFile('./dist/index.html');
 
   // Menu shortcuts
   const { Menu } = require('electron');
-  // 
+
   
   const menuTemplate: MenuItemConstructorOptions[] = [
     {

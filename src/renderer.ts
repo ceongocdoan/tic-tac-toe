@@ -1,21 +1,33 @@
 import { Game } from "./Game"
 import { Database } from './db';
 
-// Đảm bảo rằng 'game' và 'gameActive' được định nghĩa trước đó
-let game = new Game();
-let gameActive = true;
-let currentPlayer = 'X';
-let moves = 0;
+declare global {
+    interface Window {
+        electron: {
+            onGameStart: (callback: () => void) => void;
+            onGameRestart: (callback: () => void) => void;
+        };
+    }
+}
+
+let game: Game;
+let gameActive: boolean;
+let currentPlayer: string;
+let moves: number;
 
 // Lấy phần tử status display
 const statusDisplay = document.getElementById('statusDisplay');
 
-// Khởi động lại trò chơi
-function startGame() {
+function initializeGameVariables() {
     game = new Game();
     gameActive = true;
     currentPlayer = 'X';
     moves = 0;
+}
+
+// Khởi động lại trò chơi
+function startGame() {
+    initializeGameVariables();
     if (statusDisplay) {
         statusDisplay.textContent = `Player ${currentPlayer}'s turn`;
     }
@@ -33,19 +45,25 @@ function handleCellClick(event: MouseEvent) {
         target.textContent = currentPlayer;
         game.Play(currentPlayer, x, y);
         moves++;
-        
+
         const winner = game.Winner();
         if (winner) {
-            statusDisplay!.textContent = `Player ${winner} wins!`;
+            if (statusDisplay) {
+                statusDisplay.textContent = `Player ${winner} wins!`;
+            }
             const db = Database.getInstance();
             db.saveWinner(winner, moves);
             gameActive = false;
         } else if (moves === 9) {
-            statusDisplay!.textContent = `It's a draw!`;
+            if (statusDisplay) {
+                statusDisplay.textContent = `It's a draw!`;
+            }
             gameActive = false;
         } else {
             currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-            statusDisplay!.textContent = `Player ${currentPlayer}'s turn`;
+            if (statusDisplay) {
+                statusDisplay.textContent = `Player ${currentPlayer}'s turn`;
+            }
         }
     }
 }
@@ -56,10 +74,8 @@ document.querySelectorAll('.cell').forEach(cell => {
 });
 
 // Xử lý các sự kiện từ Electron
-
-
-window.electron.onGameStart(startGame);
-window.electron.onGameRestart(startGame);
+window.electron.onGameStart(() => startGame());
+window.electron.onGameRestart(() => startGame());
 
 // Bắt đầu trò chơi khi tải trang
 startGame();
