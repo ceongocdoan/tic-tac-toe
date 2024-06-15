@@ -1,7 +1,8 @@
-import { Electron } from 'electron';
+import { Game } from "./Game"
+import { Database } from './db';
 
 // Đảm bảo rằng 'game' và 'gameActive' được định nghĩa trước đó
-let game = new TicTacToeGame();
+let game = new Game();
 let gameActive = true;
 let currentPlayer = 'X';
 let moves = 0;
@@ -11,11 +12,13 @@ const statusDisplay = document.getElementById('statusDisplay');
 
 // Khởi động lại trò chơi
 function startGame() {
-    game = new TicTacToeGame();
+    game = new Game();
     gameActive = true;
     currentPlayer = 'X';
     moves = 0;
-    statusDisplay.textContent = `Player ${currentPlayer}'s turn`;
+    if (statusDisplay) {
+        statusDisplay.textContent = `Player ${currentPlayer}'s turn`;
+    }
     // Xóa nội dung của các ô cờ
     document.querySelectorAll('.cell').forEach(cell => cell.textContent = '');
 }
@@ -34,7 +37,8 @@ function handleCellClick(event: MouseEvent) {
         const winner = game.Winner();
         if (winner) {
             statusDisplay!.textContent = `Player ${winner} wins!`;
-            electron.saveWinner(winner, moves);
+            const db = Database.getInstance();
+            db.saveWinner(winner, moves);
             gameActive = false;
         } else if (moves === 9) {
             statusDisplay!.textContent = `It's a draw!`;
@@ -48,13 +52,11 @@ function handleCellClick(event: MouseEvent) {
 
 // Đăng ký sự kiện click cho các ô cờ
 document.querySelectorAll('.cell').forEach(cell => {
-    cell.addEventListener('click', handleCellClick);
+    cell.addEventListener('click', handleCellClick as EventListener);
 });
 
 // Xử lý các sự kiện từ Electron
-window.electron.onShowInfo(() => {
-    alert(`Tic Tac Toe Game\nDeveloped by: [Your Team]\nCourse: [Course Name]\nDepartment: [Department]\nUniversity: [University]\nDate: [Completion Date]`);
-});
+
 
 window.electron.onGameStart(startGame);
 window.electron.onGameRestart(startGame);
