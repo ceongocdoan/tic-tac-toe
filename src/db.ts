@@ -1,8 +1,9 @@
+
 import mysql from 'mysql2/promise';
 
 export class Database {
     private static instance: Database;
-    private connection: mysql.Connection;
+    private connection!: mysql.Connection; // Sử dụng '!' để bỏ qua kiểm tra undefined
 
     private constructor() {
         this.init();
