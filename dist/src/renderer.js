@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Game_1 = require("./Game");
-var electron_1 = require("electron"); // Import electron IPC renderer
+var electron_1 = require("electron");
 var game = new Game_1.Game();
 var gameActive = true;
 var currentPlayer = 'X';
@@ -18,7 +18,15 @@ function startGame() {
     }
     document.querySelectorAll('.cell').forEach(function (cell) { return cell.textContent = ''; });
 }
-// Function to handle cell click event
+function restartGame() {
+    startGame(); // Gọi lại hàm startGame() để bắt đầu game mới khi restart
+}
+function stopGame() {
+    gameActive = false;
+    if (statusDisplay) {
+        statusDisplay.textContent = "Game stopped";
+    }
+}
 function handleCellClick(event) {
     var target = event.target;
     var x = parseInt(target.getAttribute('data-x'));
@@ -64,29 +72,31 @@ function handleCellClick(event) {
 document.querySelectorAll('.cell').forEach(function (cell) {
     cell.addEventListener('click', handleCellClick);
 });
-// Function to save winner and update leaderboard
 function saveWinnerAndUpdateLeaderboard(winner, moves) {
-    electron_1.ipcRenderer.send('save-winner', { winner: winner, moves: moves }); // Send winner and moves to main process
+    electron_1.ipcRenderer.send('save-winner', { winner: winner, moves: moves });
 }
-// Attach click event for grid cells
-document.querySelectorAll('.cell').forEach(function (cell) {
-    cell.addEventListener('click', handleCellClick);
-});
-// Attach event listeners for Electron events
-window.Electron.onShowInfo(function (_event, message) {
-    alert(message);
+window.Electron.onShowInfo(function (info) {
+    var infoDiv = document.createElement('div');
+    infoDiv.innerHTML = "\n        <p>Course Name: ".concat(info.courseName, "</p>\n        <p>School: ").concat(info.school, "</p>\n        <p>Department: ").concat(info.department, "</p>\n        <p>End Date: ").concat(info.endDate, "</p>\n        <ul>\n            ").concat(info.members.map(function (member) { return "<li>".concat(member.name, " - ").concat(member.id, "</li>"); }).join(''), "\n        </ul>\n    ");
+    document.body.appendChild(infoDiv);
 });
 window.Electron.onGameStart(function () {
     startGame();
 });
 window.Electron.onGameRestart(function () {
-    startGame();
+    restartGame(); // Gọi lại hàm restartGame() khi nhận được sự kiện game-restart từ main process
 });
-window.Electron.triggerGameStart = function () {
-    startGame();
-};
+window.Electron.onGameStop(function () {
+    stopGame();
+});
+// window.Electron.triggerGameStart = () => {
+//     startGame();
+// };
 window.Electron.triggerGameRestart = function () {
-    startGame();
+    restartGame();
+};
+window.Electron.triggerGameStop = function () {
+    stopGame();
 };
 window.Electron.saveWinner = saveWinnerAndUpdateLeaderboard;
 // Listen for leaderboard data
@@ -96,4 +106,18 @@ window.Electron.on('leaderboard-data', function (data) {
 // Start the game when the document is ready
 document.addEventListener('DOMContentLoaded', function () {
     startGame();
+    document.addEventListener('keydown', function (event) {
+        if (event.ctrlKey && event.key === 'i') {
+            window.Electron.triggerShowInfo();
+        }
+        else if (event.key === 'F1') {
+            window.Electron.triggerShowInfo();
+        }
+        else if (event.ctrlKey && event.key === 'r') {
+            window.Electron.triggerGameRestart(); // Trigger game restart on Ctrl+R
+        }
+        else if (event.ctrlKey && event.key === 'P') {
+            window.Electron.triggerGameStart(); // Trigger game stop on Ctrl+P
+        }
+    });
 });

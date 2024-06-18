@@ -72,6 +72,67 @@ function createWindow() {
         }
     });
     mainWindow.loadFile('index.html');
+    mainWindow.webContents.openDevTools();
+    var menu = electron_1.Menu.buildFromTemplate([
+        {
+            label: 'File',
+            submenu: [
+                {
+                    label: 'Start Game',
+                    accelerator: 'Ctrl+P',
+                    click: function () {
+                        mainWindow.webContents.send('game-start');
+                    }
+                },
+                {
+                    label: 'Restart Game',
+                    accelerator: 'Ctrl+M',
+                    click: function () {
+                        mainWindow.webContents.send('game-restart');
+                    }
+                },
+                {
+                    label: 'Stop Game',
+                    accelerator: 'Ctrl+E',
+                    click: function () {
+                        mainWindow.webContents.send('game-stop');
+                    }
+                },
+                {
+                    label: 'Show Leaderboard',
+                    accelerator: 'Ctrl+T',
+                    click: function () {
+                        mainWindow.webContents.send('show-leaderboard');
+                    }
+                },
+                {
+                    label: 'Quit',
+                    accelerator: 'Ctrl+Q',
+                    click: function () {
+                        electron_1.app.quit();
+                    }
+                }
+            ]
+        },
+        {
+            label: 'Help',
+            submenu: [
+                {
+                    label: 'About',
+                    accelerator: 'Ctrl+I',
+                    click: function () {
+                        electron_1.dialog.showMessageBox({
+                            type: 'info',
+                            title: 'About',
+                            message: 'Doan Anh Ngoc Pham Thi Lien',
+                            detail: 'Phat trien ung dung'
+                        });
+                    }
+                }
+            ]
+        }
+    ]);
+    electron_1.Menu.setApplicationMenu(menu);
 }
 electron_1.app.on('ready', createWindow);
 electron_1.app.on('window-all-closed', function () {
@@ -85,13 +146,28 @@ electron_1.app.on('activate', function () {
     }
 });
 electron_1.ipcMain.on('show-info', function (event) {
-    event.reply('show-info-reply', 'Information message from the main process.');
+    var info = {
+        courseName: 'Your Course Name',
+        school: 'Your School',
+        department: 'Your Department',
+        members: [
+            { name: 'Member 1', id: 'MSSV1' },
+            { name: 'Member 2', id: 'MSSV2' },
+            { name: 'Member 3', id: 'MSSV3' },
+            // Thêm thành viên khác nếu cần
+        ],
+        endDate: 'Your End Date'
+    };
+    event.reply('show-info-reply', info);
 });
 electron_1.ipcMain.on('game-start', function (event) {
     event.reply('game-start-reply');
 });
 electron_1.ipcMain.on('game-restart', function (event) {
     event.reply('game-restart-reply');
+});
+electron_1.ipcMain.on('game-stop', function (event) {
+    event.reply('game-stop-reply');
 });
 electron_1.ipcMain.on('show-leaderboard', function (event) { return __awaiter(void 0, void 0, void 0, function () {
     var leaderboardData;

@@ -124,6 +124,16 @@
         document.querySelectorAll('.cell').forEach(cell => {
             cell.addEventListener('click', handleCellClick);
         });
+
+        // Listen for keydown events to trigger info display
+        document.addEventListener('keydown', (event) => {
+            console.log('haha')
+            if (event.ctrlKey && event.key === 'i') {
+                window.electron.showInfo();
+            } else if (event.key === 'F1') {
+                window.electron.showInfo();
+            }
+        });
     </script>
 </body>
 </html>

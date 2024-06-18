@@ -1,6 +1,7 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, Menu, ipcMain, dialog } from 'electron';
 import * as path from 'path';
 import { Database } from './src/db';
+
 let mainWindow: BrowserWindow;
 
 function createWindow() {
@@ -13,6 +14,69 @@ function createWindow() {
     });
 
     mainWindow.loadFile('index.html');
+    mainWindow.webContents.openDevTools();
+
+    const menu = Menu.buildFromTemplate([
+        {
+            label: 'File',
+            submenu: [
+                {
+                    label: 'Start Game',
+                    accelerator: 'Ctrl+P',
+                    click: () => {
+                        mainWindow.webContents.send('game-start');
+                    }
+                },
+                {
+                    label: 'Restart Game',
+                    accelerator: 'Ctrl+M',
+                    click: () => {
+                        mainWindow.webContents.send('game-restart');
+                    }
+                },
+                {
+                    label: 'Stop Game',
+                    accelerator: 'Ctrl+E',
+                    click: () => {
+                        mainWindow.webContents.send('game-stop');
+                    }
+                },
+                {
+                    label: 'Show Leaderboard',
+                    accelerator: 'Ctrl+T',
+                    click: () => {
+                        mainWindow.webContents.send('show-leaderboard');
+                    }
+                },
+                {
+                    label: 'Quit',
+                    accelerator: 'Ctrl+Q',
+                    click: () => {
+                        app.quit();
+                    }
+                }
+            ]
+        },
+        {
+            label: 'Help',
+            submenu: [
+                {
+                    label: 'About',
+                    accelerator: 'Ctrl+I',
+                    click: () => {
+                        dialog.showMessageBox({
+                            type: 'info',
+                            title: 'About',
+                            message: 'Doan Anh Ngoc Pham Thi Lien',
+                            detail: 'Phat trien ung dung'
+                        });
+                    }
+                }
+            ]
+        }
+    ]);
+
+    Menu.setApplicationMenu(menu);
 }
 
 app.on('ready', createWindow);
@@ -30,7 +94,19 @@ app.on('activate', () => {
 });
 
 ipcMain.on('show-info', (event) => {
-    event.reply('show-info-reply', 'Information message from the main process.');
+    const info = {
+        courseName: 'Your Course Name',
+        school: 'Your School',
+        department: 'Your Department',
+        members: [
+            { name: 'Member 1', id: 'MSSV1' },
+            { name: 'Member 2', id: 'MSSV2' },
+            { name: 'Member 3', id: 'MSSV3' },
+            // Thêm thành viên khác nếu cần
+        ],
+        endDate: 'Your End Date'
+    };
+    event.reply('show-info-reply', info);
 });
 
 ipcMain.on('game-start', (event) => {
@@ -39,6 +115,10 @@ ipcMain.on('game-start', (event) => {
 
 ipcMain.on('game-restart', (event) => {
     event.reply('game-restart-reply');
+});
+
+ipcMain.on('game-stop', (event) => {
+    event.reply('game-stop-reply');
 });
 
 ipcMain.on('show-leaderboard', async (event) => {

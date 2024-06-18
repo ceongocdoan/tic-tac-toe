@@ -1,5 +1,5 @@
 import { Game } from './Game';
-import { ipcRenderer } from 'electron'; // Import electron IPC renderer
+import { contextBridge, ipcRenderer } from 'electron';
 
 let game = new Game();
 let gameActive = true;
@@ -20,8 +20,17 @@ function startGame() {
     document.querySelectorAll('.cell').forEach(cell => cell.textContent = '');
 }
 
+function restartGame() {
+    startGame(); // Gọi lại hàm startGame() để bắt đầu game mới khi restart
+}
 
-// Function to handle cell click event
+function stopGame() {
+    gameActive = false;
+    if (statusDisplay) {
+        statusDisplay.textContent = `Game stopped`;
+    }
+}
+
 function handleCellClick(event: Event) {
     const target = event.target as HTMLElement;
     const x = parseInt(target.getAttribute('data-x')!);
@@ -63,42 +72,44 @@ function handleCellClick(event: Event) {
     }
 }
 
-        document.querySelectorAll('.cell').forEach(cell => {
-            cell.addEventListener('click', handleCellClick);
-        });
-
-// Function to save winner and update leaderboard
-function saveWinnerAndUpdateLeaderboard(winner: string, moves: number) {
-    ipcRenderer.send('save-winner', { winner, moves }); // Send winner and moves to main process
-}
-
-// Attach click event for grid cells
 document.querySelectorAll('.cell').forEach(cell => {
     cell.addEventListener('click', handleCellClick);
 });
 
-// Declare the Electron API interface
+function saveWinnerAndUpdateLeaderboard(winner: string, moves: number) {
+    ipcRenderer.send('save-winner', { winner, moves });
+}
+
 interface ElectronAPI {
-    onShowInfo: (callback: (event: any, message: string) => void) => void;
+    onShowInfo: (callback: (info: any) => void) => void;
     onGameStart: (callback: () => void) => void;
     onGameRestart: (callback: () => void) => void;
+    onGameStop: (callback: () => void) => void;
     triggerShowInfo: () => void;
     triggerGameStart: () => void;
     triggerGameRestart: () => void;
+    triggerGameStop: () => void;
     saveWinner: (player: string, moves: number) => void;
     on: (channel: string, callback: (event: any, ...args: any[]) => void) => void;
 }
-
-// Extend the Window interface to include ElectronAPI
 declare global {
     interface Window {
-        Electron: ElectronAPI; // Change 'electron' to 'Electron'
+        Electron: ElectronAPI;
     }
 }
 
-// Attach event listeners for Electron events
-window.Electron.onShowInfo((_event: any, message: string) => {
-    alert(message);
+window.Electron.onShowInfo((info) => {
+    const infoDiv = document.createElement('div');
+    infoDiv.innerHTML = `
+        <p>Course Name: ${info.courseName}</p>
+        <p>School: ${info.school}</p>
+        <p>Department: ${info.department}</p>
+        <p>End Date: ${info.endDate}</p>
+        <ul>
+            ${info.members.map((member: any) => `<li>${member.name} - ${member.id}</li>`).join('')}
+        </ul>
+    `;
+    document.body.appendChild(infoDiv);
 });
 
 window.Electron.onGameStart(() => {
@@ -106,7 +117,11 @@ window.Electron.onGameStart(() => {
 });
 
 window.Electron.onGameRestart(() => {
-    startGame();
+    restartGame(); // Gọi lại hàm restartGame() khi nhận được sự kiện game-restart từ main process
+});
+
+window.Electron.onGameStop(() => {
+    stopGame();
 });
 
 window.Electron.triggerGameStart = () => {
@@ -114,7 +129,11 @@ window.Electron.triggerGameStart = () => {
 };
 
 window.Electron.triggerGameRestart = () => {
-    startGame();
+    restartGame();
+};
+
+window.Electron.triggerGameStop = () => {
+    stopGame();
 };
 
 window.Electron.saveWinner = saveWinnerAndUpdateLeaderboard;
@@ -127,4 +146,16 @@ window.Electron.on('leaderboard-data', (data: any) => {
 // Start the game when the document is ready
 document.addEventListener('DOMContentLoaded', () => {
     startGame();
+    document.addEventListener('keydown', (event) => {
+        if (event.ctrlKey && event.key === 'i') {
+            window.Electron.triggerShowInfo();
+        } else if (event.key === 'F1') {
+            window.Electron.triggerShowInfo();
+        } else if (event.ctrlKey && event.key === 'r') {
+            window.Electron.triggerGameRestart(); // Trigger game restart on Ctrl+R
+        } else if (event.ctrlKey && event.key === 'P') {
+            window.Electron.triggerGameStart(); // Trigger game stop on Ctrl+P
+        }
+        
+    });
 });
